@@ -59,6 +59,8 @@ int DUAL_SERVO_TWO_MIN_TRAVEL = 908;
 
 byte count=0;
 
+int maxSpeed = 50;
+
 void setup(){
 
  //Heartbeat LED
@@ -75,26 +77,9 @@ fabrik2D.setTolerance(1);
  
  //Servo
  I2CServo_Begin();
- //address, park_type, motor_polarity, continuous_rotation, max_power, max_speed, ramp_time ms, ramp_curve, use_crc
- //I2CServo_Setup(i2c_address2, 2, 1, 0, 10, 60, 300, 50, 0);
- // I2CServo_SetTargetPosition(i2c_address2, 512, 0);
- //I2CServo_Setup(i2c_address3, 2, 1, 0, 10, 60, 300, 50, 0);
- // I2CServo_SetTargetPosition(i2c_address3, 512, 0);
-
- //I2CServo_Setup(shoulderServo2, 100, 1, 0, 200, 50, 1, 0, 0); //address, park_type, motor_polarity, continuous_rotation, max_power, max_speed, ramp_time ms, ramp_curve, use_crc
- //I2CServo_SetTargetPosition(shoulderServo2, DUAL_SERVO_TWO_MAX_TRAVEL, 0);
-
- //I2CServo_Setup(elbowServo, 100, 1, 0, 200, 50, 1, 0, 0); //address, park_type, motor_polarity, continuous_rotation, max_power, max_speed, ramp_time ms, ramp_curve, use_crc
- //I2CServo_SetTargetPosition(elbowServo, DUAL_SERVO_TWO_MAX_TRAVEL, 0);
-
- //I2CServo_Setup(shoulderServo2, 100, 1, 0, 200, 100, 1, 0, 0); //address, park_type, motor_polarity, continuous_rotation, max_power, max_speed, ramp_time ms, ramp_curve, use_crc
- //I2CServo_Setup(shoulderServo2, 100, 1, 0, 200, 100, 1, 0, 0); //address, park_type, motor_polarity, continuous_rotation, max_power, max_speed, ramp_time ms, ramp_curve, use_crc
-
-//I2CServo_Setup(shoulderServo2, 2, 1, 0, 100, 100, 500, 70, 0); //address, park_type, motor_polarity, continuous_rotation, max_power, max_speed, ramp_time ms, ramp_curve, use_crc
-//I2CServo_Setup(elbowServo, 2, 1, 0, 100, 100, 500, 70, 0); //address, park_type, motor_polarity, continuous_rotation, max_power, max_speed, ramp_time ms, ramp_curve, use_crc
-//I2CServo_Setup(toolServoTilt, 2, 1, 0, 100, 100, 500, 70, 0); //address, park_type, motor_polarity, continuous_rotation, max_power, max_speed, ramp_time ms, ramp_curve, use_crc
-delay(100);
-// Scan for All servos
+  delay(100);
+  
+  // Scan for All servos
   for(byte i =0; i<=127;i++){
    if(I2CServo_GetI2cAddress(i, &data[0], false) ==1){
      Serial.print(i, HEX);
@@ -106,18 +91,12 @@ delay(100);
 
 void loop(){
 
-int maxSpeed = 50;
+  // Set Servos operationa parameters
+  //address, park_type, motor_polarity, continuous_rotation, max_power, max_speed, ramp_time ms, ramp_curve, use_crc
+  I2CServo_Setup(shoulderServo2, 2, 1, 0, 100, maxSpeed, 500, 70, 1);
+  I2CServo_Setup(elbowServo, 2, 1, 0, 100, maxSpeed, 500, 70, 1);
+  I2CServo_Setup(toolServoTilt, 2, 1, 0, 100, maxSpeed, 500, 70, 1);
 
-I2CServo_Setup(shoulderServo2, 2, 1, 0, 100, maxSpeed, 500, 70, 1); //address, park_type, motor_polarity, continuous_rotation, max_power, max_speed, ramp_time ms, ramp_curve, use_crc
-I2CServo_Setup(elbowServo, 2, 1, 0, 100, maxSpeed, 500, 70, 1); //address, park_type, motor_polarity, continuous_rotation, max_power, max_speed, ramp_time ms, ramp_curve, use_crc
-I2CServo_Setup(toolServoTilt, 2, 1, 0, 100, maxSpeed, 500, 70, 1); //address, park_type, motor_polarity, continuous_rotation, max_power, max_speed, ramp_time ms, ramp_curve, use_crc
-
- //Flash heartbeat LED
- digitalWrite(LED_PIN, HIGH);//  //PORTB |= 1<<LED_PIN;
- delay(20); 
- digitalWrite(LED_PIN, LOW);//PORTB &= ~(1<<LED_PIN);
- delay(20);
-    
   // Solve inverse kinematics given the coordinates x and y and the list of lengths for the arm.
   //bool res = fabrik2D.solve2(x, y, z, lengths);
   int xpos,ypos = 0;
@@ -140,7 +119,9 @@ I2CServo_Setup(toolServoTilt, 2, 1, 0, 100, maxSpeed, 500, 70, 1); //address, pa
   xpos = 200;
   ypos = 200;
   */
-  
+
+  // Move the arm with tool angle set to 90deg, 
+  // TBD: The only thing is I cannot wrap my mind 90deg in relation to what ?
   bool solved = fabrik2D.solve(xpos, ypos, M_PI_2, lengths);
   
   if(solved)
@@ -196,7 +177,7 @@ I2CServo_Setup(toolServoTilt, 2, 1, 0, 100, maxSpeed, 500, 70, 1); //address, pa
   Serial.println(shoulderTargetPosition);
   I2CServo_SetTargetPosition(shoulderServo2, shoulderTargetPosition, 0);
 
-  // Angles to set cannot be less then 0 and more tehn 180
+  //Angles to set cannot be less then 0 and more tehn 180
   //angleSer2Calc = constrain(angleSer2Calc, 0, 180);
   angleSer2Calc = (min(180, max(0, angleSer2 + 180)));
   int elbowTargetPosition = map(angleSer2Calc, 0, 180, DUAL_SERVO_ONE_MIN_TRAVEL, DUAL_SERVO_ONE_MAX_TRAVEL);
@@ -208,51 +189,21 @@ I2CServo_Setup(toolServoTilt, 2, 1, 0, 100, maxSpeed, 500, 70, 1); //address, pa
   
   toolAngleTilt = (min(180, max(0, toolAngleTilt)));
   int toolTargetPosition = map(toolAngleTilt, 0, 180, DUAL_SERVO_ONE_MIN_TRAVEL, DUAL_SERVO_ONE_MAX_TRAVEL);
+  // Hardcode tool angle to 90deg. or 1024 value
+  toolTargetPosition = 1024;
   Serial.print("Titlt Position to set: ");
   Serial.println(toolTargetPosition);
   I2CServo_SetTargetPosition(toolServoTilt, toolTargetPosition, 0);
 
-  int16_t shoulderServo2pos;
+  int16_t shoulderServo2pos = 0;
   i2cServo_GetCurrentPosition(shoulderServo2, &shoulderServo2pos, 0);
   Serial.println(shoulderServo2pos);
   delay(200);
 
-  int16_t elbowServo2pos;
+  int16_t elbowServo2pos = 0;
   i2cServo_GetCurrentPosition(elbowServo, &elbowServo2pos, 0);
   Serial.println(elbowServo2pos);
   delay(200);
 
-
   delay(15000);
-/*
- // Move
- int16_t pos2;
- int16_t pos3;
-
- // TODO: Translate solution angles to servo positions via MAP
-
- I2CServo_SetTargetPosition(i2c_address, MIN_TRAVEL, 0);
- I2CServo_SetTargetPosition(i2c_address2, DUAL_SERVO_ONE_MAX_TRAVEL, 0);
- I2CServo_SetTargetPosition(i2c_address3, DUAL_SERVO_TWO_MAX_TRAVEL, 0);
- I2CServo_SetTargetPosition(i2c_address3, DUAL_SERVO_TWO_MAX_TRAVEL, 0);
- 
- delay(5000);
- i2cServo_GetCurrentPosition(i2c_address2, &pos2, 0);
- Serial.println(pos2);
- i2cServo_GetCurrentPosition(i2c_address3, &pos3, 0);
- Serial.println(pos3);
- delay(200);
-
- I2CServo_SetTargetPosition(i2c_address, MAX_TRAVEL, 0);
- I2CServo_SetTargetPosition(i2c_address2, DUAL_SERVO_ONE_MIN_TRAVEL, 0);
- I2CServo_SetTargetPosition(i2c_address3, DUAL_SERVO_TWO_MIN_TRAVEL, 0);
-
- delay(5000);
- i2cServo_GetCurrentPosition(i2c_address2, &pos2, 0);
- Serial.println(pos2);
- i2cServo_GetCurrentPosition(i2c_address3, &pos3, 0);
- Serial.println(pos3);
- delay(200); 
-*/
- 
 }//loop
