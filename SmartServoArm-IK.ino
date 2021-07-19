@@ -33,7 +33,6 @@ Fabrik2D fabrik2D(4, lengths); // This arm has 3 joints; one in the origin, the 
 
 byte data[16];  
 byte baseServo = 0x25; //modify address as needed here. servo default is 0x00
-//byte shoulderServo = 0x65; //modify address as needed here. servo default is 0x00
 byte shoulderServo2 = 0x22; // Double servo
 byte elbowServo = 0x26; //modify address as needed here. servo default is 0x00
 byte toolServoTilt = 0x65;
@@ -56,6 +55,11 @@ int DUAL_SERVO_ONE_MIN_TRAVEL = 73;
 int DUAL_SERVO_TWO_MAX_TRAVEL = 89;
 int DUAL_SERVO_TWO_MID_TRAVEL = 487;
 int DUAL_SERVO_TWO_MIN_TRAVEL = 908;
+
+// Values very specific to the tool servo 
+int TOOL_SERVO_MAX_TRAVEL = 984;
+int TOOL_SERVO_MID_TRAVEL = 512;
+int TOOL_SERVO_MIN_TRAVEL = 40;
 
 byte count=0;
 
@@ -186,12 +190,17 @@ void loop(){
   bool resultElbow = I2CServo_SetTargetPosition(elbowServo, elbowTargetPosition, 0);
   Serial.print("Elbow Position set: ");  
   Serial.println(resultElbow);
-  
+
+  /**
+   * We need to compensate for the fact that Camera is connected to large the side of the servo, not small side
+   * Hence we need to adjust for 90deg ( just need to figure out +90 or -90 :)
+   */
   toolAngleTilt = (min(180, max(0, toolAngleTilt)));
-  int toolTargetPosition = map(toolAngleTilt, 0, 180, DUAL_SERVO_ONE_MIN_TRAVEL, DUAL_SERVO_ONE_MAX_TRAVEL);
-  // Hardcode tool angle to 90deg. or 1024 value
-  toolTargetPosition = 1024;
-  Serial.print("Titlt Position to set: ");
+  //int toolTargetPosition = map(toolAngleTilt, 0, 180, DUAL_SERVO_ONE_MIN_TRAVEL, DUAL_SERVO_ONE_MAX_TRAVEL);
+  int toolTargetPosition = map(toolAngleTilt, 0, 180, TOOL_SERVO_MIN_TRAVEL, TOOL_SERVO_MAX_TRAVEL);
+  // Hardcode tool angle to 90deg. or 512 value
+  // toolTargetPosition = 512;
+  Serial.print("Tilt Position to set: ");
   Serial.println(toolTargetPosition);
   I2CServo_SetTargetPosition(toolServoTilt, toolTargetPosition, 0);
 
