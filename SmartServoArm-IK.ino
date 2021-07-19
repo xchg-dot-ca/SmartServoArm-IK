@@ -1,32 +1,3 @@
-//
-//Statorworks 2020
-//Arduino example for SWI2C board servo control
-/* 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
-*/
-//
-//Requirements:
-//-I2CServo.ino, I2CWrapper.ino, OledSSD1306_Nano.ino on the sketch folder
-//-Select your board on the i2CWrapper.ino file
-//-If your Arduino board runs on 5V, don't forget to put an i2c level 
-// shifter or repeater to interface the servo with 3.3V
-
 #include "FABRIK2D.h"
 #include "math.h"
 
@@ -34,7 +5,7 @@
 #define BASE_HGT 125            // base hight
 #define HUMERUS 325             // shoulder-to-elbow "bone"
 #define ULNA 290                // elbow-to-wrist "bone"
-#define GRIPPER 10               // gripper (incl. gimball and canera )
+#define GRIPPER 10              // gripper (incl. gimball and canera )
 
 // Define boundaries in mm
 #define X_MAX 300
@@ -44,9 +15,7 @@
 #define Z_MAX 300
 #define Z_MIN 0
 
-#define RAD_TO_DEG  57296 / 1000
-#define DEG_TO_RAD  1000 / 57296
-
+// Define path of the camera
 int x[4] = {100,500,100,500};
 int y[4] = {100,100,100,100};
 
@@ -61,6 +30,7 @@ int lengths[] = {HUMERUS, ULNA, GRIPPER}; // 2DOF
 Fabrik2D fabrik2D(4, lengths); // This arm has 3 joints; one in the origin, the elbow and the end effector.
 
 #define LED_PIN 13
+
 byte data[16];  
 byte baseServo = 0x25; //modify address as needed here. servo default is 0x00
 //byte shoulderServo = 0x65; //modify address as needed here. servo default is 0x00
