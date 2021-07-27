@@ -19,6 +19,12 @@
 int x[4] = {100,500,100,500};
 int y[4] = {100,100,100,100};
 
+// Number of steps for path to be divided
+const int steps = 100;
+// Time between steps, ms
+int timeBetweenSteps = 2000;
+int timedSteps[steps];
+
 /*
 int x[1] = {290};
 int y[1] = {325};
@@ -61,9 +67,12 @@ int TOOL_SERVO_MAX_TRAVEL = 984;
 int TOOL_SERVO_MID_TRAVEL = 512;
 int TOOL_SERVO_MIN_TRAVEL = 40;
 
-byte count=0;
+byte count = 0;
 
-int maxSpeed = 50;
+int maxSpeed = 200;
+
+int xpos = 0;
+int ypos = 0;
 
 void setup(){
 
@@ -74,10 +83,11 @@ void setup(){
  //I2C
  I2CWrapper_Begin();  //please select your board type in I2CWrapper.ino
 
- //console
- Serial.begin(9600); //Nano
-
-fabrik2D.setTolerance(1);
+ //Console
+ Serial.begin(115200);
+ delay(1000);
+ 
+ fabrik2D.setTolerance(1);
  
  //Servo
  I2CServo_Begin();
@@ -91,26 +101,50 @@ fabrik2D.setTolerance(1);
      break;
    }
   }
+
+  int distanceX = x[1] - x[0];
+  int distancePerStep = distanceX/steps;
+  // Prepare timed steps
+  for(byte i = 0; i < steps; i++){
+    timedSteps[i] = x[0] + (i * distancePerStep);
+    Serial.print(timedSteps[i]);
+    Serial.println(" , Next Step");
+    delay(100);
+  }
 }
+
+bool thatway = true;
 
 void loop(){
 
   // Set Servos operationa parameters
-  //address, park_type, motor_polarity, continuous_rotation, max_power, max_speed, ramp_time ms, ramp_curve, use_crc
+  // address, park_type, motor_polarity, continuous_rotation, max_power, max_speed, ramp_time ms, ramp_curve, use_crc
   I2CServo_Setup(shoulderServo2, 2, 1, 0, 100, maxSpeed, 500, 70, 1);
   I2CServo_Setup(elbowServo, 2, 1, 0, 100, maxSpeed, 500, 70, 1);
   I2CServo_Setup(toolServoTilt, 2, 1, 0, 100, maxSpeed, 500, 70, 1);
 
-  // Solve inverse kinematics given the coordinates x and y and the list of lengths for the arm.
-  //bool res = fabrik2D.solve2(x, y, z, lengths);
-  int xpos,ypos = 0;
- 
-  if(indexPos > 3) {
+/*
+  if(indexPos > steps) {
     indexPos = 0;
   }
-  xpos = x[indexPos];
-  ypos = y[indexPos];
-  indexPos++;
+*/
+  if( indexPos < steps && thatway) {
+    xpos = timedSteps[indexPos];
+    ypos = 100;
+    indexPos++;
+  } else if(thatway) {
+    thatway = false;
+  }
+
+  if( indexPos > 0 && !thatway) {
+    xpos = timedSteps[indexPos];
+    ypos = 100;
+    indexPos--;
+  } else if(!thatway) {
+    thatway = true;
+  }
+  
+  //indexPos++;
 
   Serial.print("Step:");
   Serial.print(indexPos);
@@ -207,12 +241,12 @@ void loop(){
   int16_t shoulderServo2pos = 0;
   i2cServo_GetCurrentPosition(shoulderServo2, &shoulderServo2pos, 0);
   Serial.println(shoulderServo2pos);
-  delay(200);
+  delay(timeBetweenSteps);
 
   int16_t elbowServo2pos = 0;
   i2cServo_GetCurrentPosition(elbowServo, &elbowServo2pos, 0);
   Serial.println(elbowServo2pos);
-  delay(200);
-
-  delay(15000);
+  
+  //delay(200);
+  //delay(15000);
 }//loop
