@@ -53,19 +53,23 @@ int TRAVEL_0 = 922; //0-ish deg
 int TRAVEL_180 = 80; // 180-ish deg
 int MID_TRAVEL = 512; // 90-ish deg
 
-// 883 - 470 - 73
-// 89 - 487 - 908
-int DUAL_SERVO_ONE_MAX_TRAVEL = 914;
-int DUAL_SERVO_ONE_MID_TRAVEL = 470;
-int DUAL_SERVO_ONE_MIN_TRAVEL = 73;
-int DUAL_SERVO_TWO_MAX_TRAVEL = 89;
-int DUAL_SERVO_TWO_MID_TRAVEL = 487;
-int DUAL_SERVO_TWO_MIN_TRAVEL = 908;
+// Values very specific to the shoulder double servo ( 180 deg range )
+int DUAL_SERVO_DIRECT_MAX_TRAVEL = 926;   //( 180 deg )
+int DUAL_SERVO_DIRECT_MID_TRAVEL = 500;   //( 90 deg )
+int DUAL_SERVO_DIRECT_MIN_TRAVEL = 103;    //( 0 deg )
+int DUAL_SERVO_REVERSE_MAX_TRAVEL = 95;  //( 180 deg )
+int DUAL_SERVO_REVERSE_MID_TRAVEL = 508; //( 90 deg )
+int DUAL_SERVO_REVERSE_MIN_TRAVEL = 918; //( 0 deg )
 
-// Values very specific to the tool servo 
-int TOOL_SERVO_MAX_TRAVEL = 984;
-int TOOL_SERVO_MID_TRAVEL = 512;
-int TOOL_SERVO_MIN_TRAVEL = 40;
+// Values very specific to the elbow servo ( 180 deg range )
+int ELBOW_SERVO_MAX_TRAVEL = 897; //( 180 deg )
+int ELBOW_SERVO_MID_TRAVEL = 504; //( 90 deg )
+int ELBOW_SERVO_MIN_TRAVEL = 81; //( 0 deg )
+
+// Values very specific to the tool servo ( 180 deg range )
+int TOOL_SERVO_MAX_TRAVEL = 928; //( 180 deg )
+int TOOL_SERVO_MID_TRAVEL = 529; //( 90 deg )
+int TOOL_SERVO_MIN_TRAVEL = 109; //( 0 deg )
 
 byte count = 0;
 
@@ -210,7 +214,7 @@ void loop(){
   // No correction?
   // angleSer1 = constrain(angleSer1, 0, 180);
   angleSer1 = (min(180, max(0, angleSer1)));
-  int shoulderTargetPosition = map(angleSer1, 0, 180, DUAL_SERVO_ONE_MIN_TRAVEL, DUAL_SERVO_ONE_MAX_TRAVEL);
+  int shoulderTargetPosition = map(angleSer1, 0, 180, DUAL_SERVO_DIRECT_MIN_TRAVEL, DUAL_SERVO_DIRECT_MAX_TRAVEL);
   Serial.print("Shoulder Position to set: ");
   Serial.println(shoulderTargetPosition);
   I2CServo_SetTargetPosition(shoulderServo2, shoulderTargetPosition, 0);
@@ -218,7 +222,7 @@ void loop(){
   //Angles to set cannot be less then 0 and more tehn 180
   //angleSer2Calc = constrain(angleSer2Calc, 0, 180);
   angleSer2Calc = (min(180, max(0, angleSer2 + 180)));
-  int elbowTargetPosition = map(angleSer2Calc, 0, 180, DUAL_SERVO_ONE_MIN_TRAVEL, DUAL_SERVO_ONE_MAX_TRAVEL);
+  int elbowTargetPosition = map(angleSer2Calc, 0, 180, ELBOW_SERVO_MIN_TRAVEL, ELBOW_SERVO_MAX_TRAVEL);
   Serial.print("Elbow Position to set: ");
   Serial.println(elbowTargetPosition);
   bool resultElbow = I2CServo_SetTargetPosition(elbowServo, elbowTargetPosition, 0);
@@ -230,7 +234,6 @@ void loop(){
    * Hence we need to adjust for 90deg ( just need to figure out +90 or -90 :)
    */
   toolAngleTilt = (min(180, max(0, toolAngleTilt)));
-  //int toolTargetPosition = map(toolAngleTilt, 0, 180, DUAL_SERVO_ONE_MIN_TRAVEL, DUAL_SERVO_ONE_MAX_TRAVEL);
   int toolTargetPosition = map(toolAngleTilt, 0, 180, TOOL_SERVO_MIN_TRAVEL, TOOL_SERVO_MAX_TRAVEL);
   // Hardcode tool angle to 90deg. or 512 value
   // toolTargetPosition = 512;
