@@ -17,12 +17,12 @@
 
 // Define path of the camera
 int x[4] = {100,500,100,500};
-int y[4] = {100,100,100,100};
+int y[4] = {200,200,200,200};
 
 // Number of steps for path to be divided
 const int steps = 100;
 // Time between steps, ms
-int timeBetweenSteps = 2000;
+int timeBetweenSteps = 5000;
 int timedSteps[steps];
 
 /*
@@ -134,7 +134,7 @@ void loop(){
 */
   if( indexPos < steps && thatway) {
     xpos = timedSteps[indexPos];
-    ypos = 100;
+    ypos = 200;
     indexPos++;
   } else if(thatway) {
     thatway = false;
@@ -171,8 +171,8 @@ void loop(){
   else
     Serial.println("Not Solved!");  
 
-  int angleSer1 = round(fabrik2D.getAngle(0)* RAD_TO_DEG);
-  int angleSer2 = round(fabrik2D.getAngle(1)* RAD_TO_DEG);
+  int shoulderAngleSolved = round(fabrik2D.getAngle(0)* RAD_TO_DEG);
+  int elbowAngleSolved = round(fabrik2D.getAngle(1)* RAD_TO_DEG);
   int toolAngleTilt = round(fabrik2D.getAngle(2)* RAD_TO_DEG);
   //int baseAngleDeg = round(fabrik2D.getBaseAngle()* RAD_TO_DEG);
 
@@ -181,20 +181,22 @@ void loop(){
 
   int shoulderAngleCorrection = 0;
   int elbowAngleCorrection = 180;
-  int angleSer1Calc = shoulderAngleCorrection + angleSer1;
-  int angleSer2Calc = elbowAngleCorrection + angleSer2;       //abs(angleSer2);
+  int shoulderAngleCalc = shoulderAngleCorrection + shoulderAngleSolved;
+  // ATTENTION: Convert negative angle to positive, for example -270 Deg should be 360-270=90 ! For servos angles should be always positive
+  // angleSer2 = angleSer2 < 0?360 + angleSer2:angleSer2;
+  int elbowAngleCalc = elbowAngleSolved + elbowAngleCorrection;       //abs(elbowAngleSolved);
   //Serial.print("Calculated Elbow Angle, Base Angle:");
   //Serial.print(res);
   Serial.print(", Tool: ");
   Serial.print(toolAngleTilt);
   Serial.print(", Shoulder Raw:");
-  Serial.print(angleSer1);
+  Serial.print(shoulderAngleSolved);
   Serial.print(", Shoulder Calc:");
-  Serial.print(angleSer1Calc);
+  Serial.print(shoulderAngleCalc);
   Serial.print(",  Elbow Raw:");
-  Serial.print(angleSer2);
+  Serial.print(elbowAngleSolved);
   Serial.print(",  Elbow Calc:");
-  Serial.println(angleSer2Calc);
+  Serial.println(elbowAngleCalc);
   //Serial.print(", ");
   //Serial.println(baseAngleDeg);
 
@@ -213,21 +215,19 @@ void loop(){
   // Angles to set cannot be less then 0 and more tehn 180
   // No correction?
   // angleSer1 = constrain(angleSer1, 0, 180);
-  angleSer1 = (min(180, max(0, angleSer1)));
-  int shoulderTargetPosition = map(angleSer1, 0, 180, DUAL_SERVO_DIRECT_MIN_TRAVEL, DUAL_SERVO_DIRECT_MAX_TRAVEL);
+  shoulderAngleCalc = (min(180, max(0, shoulderAngleCalc)));
+  int shoulderTargetPosition = map(shoulderAngleCalc, 0, 180, DUAL_SERVO_DIRECT_MIN_TRAVEL, DUAL_SERVO_DIRECT_MAX_TRAVEL);
   Serial.print("Shoulder Position to set: ");
   Serial.println(shoulderTargetPosition);
   I2CServo_SetTargetPosition(shoulderServo2, shoulderTargetPosition, 0);
 
   //Angles to set cannot be less then 0 and more tehn 180
-  //angleSer2Calc = constrain(angleSer2Calc, 0, 180);
-  angleSer2Calc = (min(180, max(0, angleSer2 + 180)));
-  int elbowTargetPosition = map(angleSer2Calc, 0, 180, ELBOW_SERVO_MIN_TRAVEL, ELBOW_SERVO_MAX_TRAVEL);
+  //elbowAngleCalc = constrain(elbowAngleCalc, 0, 180);
+  elbowAngleCalc = (min(180, max(0, elbowAngleCalc)));
+  int elbowTargetPosition = map(elbowAngleCalc, 0, 180, ELBOW_SERVO_MIN_TRAVEL, ELBOW_SERVO_MAX_TRAVEL);
   Serial.print("Elbow Position to set: ");
   Serial.println(elbowTargetPosition);
-  bool resultElbow = I2CServo_SetTargetPosition(elbowServo, elbowTargetPosition, 0);
-  Serial.print("Elbow Position set: ");  
-  Serial.println(resultElbow);
+  I2CServo_SetTargetPosition(elbowServo, elbowTargetPosition, 0);
 
   /**
    * We need to compensate for the fact that Camera is connected to large the side of the servo, not small side
@@ -237,18 +237,19 @@ void loop(){
   int toolTargetPosition = map(toolAngleTilt, 0, 180, TOOL_SERVO_MIN_TRAVEL, TOOL_SERVO_MAX_TRAVEL);
   // Hardcode tool angle to 90deg. or 512 value
   // toolTargetPosition = 512;
-  Serial.print("Tilt Position to set: ");
+  Serial.print("Tool Position to set: ");
   Serial.println(toolTargetPosition);
   I2CServo_SetTargetPosition(toolServoTilt, toolTargetPosition, 0);
 
+  Serial.print("Current Servo position: ");
   int16_t shoulderServo2pos = 0;
   i2cServo_GetCurrentPosition(shoulderServo2, &shoulderServo2pos, 0);
-  Serial.println(shoulderServo2pos);
-  delay(timeBetweenSteps);
-
+  Serial.print("Shoulder: "); Serial.print(shoulderServo2pos);
   int16_t elbowServo2pos = 0;
   i2cServo_GetCurrentPosition(elbowServo, &elbowServo2pos, 0);
-  Serial.println(elbowServo2pos);
+  Serial.print(", Elbow: "); Serial.println(elbowServo2pos);
+
+  delay(timeBetweenSteps);
   
   //delay(200);
   //delay(15000);
